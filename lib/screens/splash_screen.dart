@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: responsive.spacing(3),
                 ),
                 image: const DecorationImage(
-                  image: AssetImage('assets/images/app_logo.jpg'),
+                  image: AssetImage('assets/images/app_icon.png'),
                   fit: BoxFit.cover,
                 ),
                 boxShadow: [

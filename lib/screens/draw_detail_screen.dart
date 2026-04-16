@@ -10,17 +10,22 @@ import '../utils/responsive_utils.dart';
 import 'spin_screen.dart';
 import 'winners_screen.dart';
 
-class DrawDetailScreen extends StatelessWidget {
+class DrawDetailScreen extends StatefulWidget {
   final String drawId;
 
   const DrawDetailScreen({super.key, required this.drawId});
 
   @override
+  State<DrawDetailScreen> createState() => _DrawDetailScreenState();
+}
+
+class _DrawDetailScreenState extends State<DrawDetailScreen> {
+  @override
   Widget build(BuildContext context) {
     // Listen to provider updates (e.g. when member added or removed)
     final provider = Provider.of<DrawProvider>(context);
     // Find the specific draw safely
-    final Draw? draw = provider.draws.where((d) => d.id == drawId).firstOrNull;
+    final Draw? draw = provider.draws.where((d) => d.id == widget.drawId).firstOrNull;
 
 
     if (draw == null) {
@@ -46,15 +51,15 @@ class DrawDetailScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => WinnersScreen(drawId: drawId)),
+                MaterialPageRoute(builder: (_) => WinnersScreen(drawId: widget.drawId)),
               );
             },
           ),
           PopupMenuButton(
             itemBuilder: (context) => [
                const PopupMenuItem(value: 'reset', child: Row(children: [
-                   Icon(Icons.refresh, color: Colors.orange), 
-                   SizedBox(width: 8), 
+                   Icon(Icons.refresh, color: Colors.orange),
+                   SizedBox(width: 8),
                    Text('Reset All Payment')
                ])),
             ],
@@ -87,8 +92,8 @@ class DrawDetailScreen extends StatelessWidget {
                  padding: EdgeInsets.symmetric(vertical: context.responsive.spacing(4)),
                  color: Colors.amber.withOpacity(0.1),
                  child: Text(
-                     "${draw.frequency.name[0].toUpperCase()}${draw.frequency.name.substring(1)} Amount: ₹${draw.entryAmount}", 
-                     textAlign: TextAlign.center, 
+                     "${draw.frequency.name[0].toUpperCase()}${draw.frequency.name.substring(1)} Amount: ₹${draw.entryAmount}",
+                     textAlign: TextAlign.center,
                      style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: context.responsive.fontSize(14))
                  ),
              ),
@@ -116,7 +121,7 @@ class DrawDetailScreen extends StatelessWidget {
                          leading: GestureDetector(
                              onTap: () {
                                  // Toggle Captain
-                                 if (!isWinner) provider.setCaptain(drawId, member.id);
+                                 if (!isWinner) provider.setCaptain(widget.drawId, member.id);
                              },
                              child: CircleAvatar(
                                  backgroundColor: isCaptain ? Colors.amber : (isWinner ? Colors.grey : (isPaid ? Colors.green : Colors.red.withOpacity(0.5))),
@@ -138,8 +143,8 @@ class DrawDetailScreen extends StatelessWidget {
                            ),
                          ),
                          subtitle: Text(
-                             (isCaptain && isWinner) 
-                                 ? "CAPTAIN • WINNER" 
+                             (isCaptain && isWinner)
+                                 ? "CAPTAIN • WINNER"
                                  : (isCaptain ? "CAPTAIN" : (isWinner ? "WINNER" : (isPaid ? "Paid" : "Not Paid"))),
                              style: TextStyle(
                                  color: (isCaptain || isWinner) ? Colors.amber : (isPaid ? Colors.green : Colors.red),
@@ -157,7 +162,7 @@ class DrawDetailScreen extends StatelessWidget {
                                        value: isPaid,
                                        activeColor: Colors.green,
                                        onChanged: (val) {
-                                           provider.toggleMemberPayment(drawId, member.id);
+                                           provider.toggleMemberPayment(widget.drawId, member.id);
                                        },
                                    ),
                                  ),
@@ -171,11 +176,11 @@ class DrawDetailScreen extends StatelessWidget {
                                    ],
                                    onSelected: (value) {
                                       if (value == 'captain') {
-                                        provider.setCaptain(drawId, member.id);
+                                        provider.setCaptain(widget.drawId, member.id);
                                       } else if (value == 'edit') {
                                         _showEditMemberDialog(context, provider, member);
                                       } else if (value == 'delete') {
-                                        provider.removeMemberFromDraw(drawId, member.id);
+                                        provider.removeMemberFromDraw(widget.drawId, member.id);
                                       }
                                    },
                                  ),
@@ -215,18 +220,18 @@ class DrawDetailScreen extends StatelessWidget {
                             ),
                             SizedBox(height: responsive.spacing(16)),
                          ],
-                         
+
                         FloatingActionButton.extended(
                           heroTag: "spin",
                           backgroundColor: (draw.captainId != null && draw.activeMembers.isNotEmpty) ? Colors.amber : Colors.grey,
-                          onPressed: (draw.captainId == null) 
+                          onPressed: (draw.captainId == null)
                               ? () => _showErrorDialog(context, "No Captain Selected!", "Please assign a Captain before spinning.")
-                              : (draw.activeMembers.isEmpty 
+                              : (draw.activeMembers.isEmpty
                                   ? () => _showErrorDialog(context, "No Eligible Members", "No members have PAID yet (or all have won). Mark payments to proceed.")
                                   : () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (_) => SpinScreen(drawId: drawId)),
+                                        MaterialPageRoute(builder: (_) => SpinScreen(drawId: widget.drawId)),
                                       ).then((value) {
                                           // If a winner was selected in SpinScreen, payments reset automatically there.
                                       });
@@ -305,45 +310,40 @@ class DrawDetailScreen extends StatelessWidget {
   }
 
   void _confirmManualWinner(BuildContext context, DrawProvider provider, Draw draw, Member member, {bool isFinal = false}) {
-      showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-              title: Text(isFinal ? "Finish Draw?" : "Confirm Winner"),
-              content: Text(isFinal 
-                  ? "Declare '${member.name}' as the FINAL winner and complete the draw?" 
-                  : "Declare '${member.name}' as the winner of this draw?"),
-              actions: [
-                  TextButton(onPressed: ()=>Navigator.pop(ctx), child: const Text("Cancel")),
-                  ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
-                      onPressed: () {
-                           // Close confirmation dialog first
-                           Navigator.pop(ctx);
-                           
-                           // Record the winner (this may trigger a rebuild)
-                           final prize = draw.defaultPrize ?? "Winner of Draw ${draw.name}"; 
-                           final winner = Winner(
-                                  member: member,
-                                  date: DateTime.now(),
-                                  prize: prize + (isFinal ? " (Final)" : " (Manual)")
-                           );
-                           provider.recordWinner(draw.id, winner);
-                           
-                           // Use post-frame callback to show celebration dialog after rebuild
-                           WidgetsBinding.instance.addPostFrameCallback((_) {
-                             if (context.mounted) {
-                               _showCelebrationDialog(context, member, isFinal);
-                             }
-                           });
-                      },
-                      child: Text(isFinal ? "Finish & Win" : "Confirm Win")
-                  )
-              ],
-          )
-      );
-  }
+    showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(isFinal ? "Finish Draw?" : "Confirm Winner"),
+          content: Text(isFinal
+              ? "Declare '${member.name}' as the FINAL winner and complete the draw?"
+              : "Declare '${member.name}' as the winner of this draw?"),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+            ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black),
+                onPressed: () {
+                  final prize = draw.defaultPrize ?? "Winner of Draw ${draw.name}";
+                  final winner = Winner(
+                      member: member,
+                      date: DateTime.now(),
+                      prize: prize + (isFinal ? " (Final)" : " (Manual)")
+                  );
+                  provider.recordWinner(draw.id, winner);
+                  Navigator.of(ctx).pop();
 
-  void _showResetConfirmDialog(BuildContext context, DrawProvider provider) {
+                  // ✅ Use State's own `this.context` — always valid while mounted
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _showCelebrationDialog(this.context, member, isFinal);
+                    }
+                  });
+                },
+                child: Text(isFinal ? "Finish & Win" : "Confirm Win")
+            )
+          ],
+        )
+    );
+  }  void _showResetConfirmDialog(BuildContext context, DrawProvider provider) {
       showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -354,7 +354,7 @@ class DrawDetailScreen extends StatelessWidget {
                   ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.black),
                       onPressed: () {
-                          provider.resetPayments(drawId);
+                          provider.resetPayments(widget.drawId);
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Payments Reset! Ready for next round.")));
                       },
@@ -406,7 +406,6 @@ class DrawDetailScreen extends StatelessWidget {
       );
   }
 
-
   Widget _buildStatItem(BuildContext context, String label, String value, {Color? color}) {
     final responsive = context.responsive;
     return Column(
@@ -434,7 +433,7 @@ class DrawDetailScreen extends StatelessWidget {
             onPressed: () {
               if (nameController.text.isNotEmpty) {
                 final newMember = Member.create(name: nameController.text);
-                provider.addMemberToDraw(drawId, newMember);
+                provider.addMemberToDraw(widget.drawId, newMember);
                 Navigator.pop(ctx);
               }
             },
@@ -468,7 +467,7 @@ class DrawDetailScreen extends StatelessWidget {
                   phone: member.phone,
                   isPaid: member.isPaid,
                 );
-                provider.updateMember(drawId, updatedMember);
+                provider.updateMember(widget.drawId, updatedMember);
                 Navigator.pop(ctx);
               }
             },
@@ -482,25 +481,25 @@ class DrawDetailScreen extends StatelessWidget {
   void _shareReport(BuildContext context, Draw draw) {
       final total = draw.members.length;
       final paid = draw.members.where((m) => m.isPaid).length;
-      
+
       final buffer = StringBuffer();
       buffer.writeln("📢 *${draw.name.toUpperCase()} REPORT* 📢");
       if (draw.entryAmount != null) buffer.writeln("💰 Amount: ₹${draw.entryAmount}");
       buffer.writeln("📅 Status: $paid/$total Paid");
       buffer.writeln("--------------------------------");
-      
+
       if (draw.defaultPrize != null) buffer.writeln("🏆 Prize: ${draw.defaultPrize}");
       if (draw.captainId != null) {
           final captain = draw.members.firstWhere((m) => m.id == draw.captainId);
           buffer.writeln("⭐ Captain: ${captain.name}");
       }
       buffer.writeln("--------------------------------");
-      
+
       buffer.writeln("📋 *Members List:*");
       for (var m in draw.members) {
           final status = m.isPaid ? "✅ Paid" : "❌ Due";
           String winnerInfo = "";
-          
+
           try {
               final winner = draw.winners.firstWhere((w) => w.member.id == m.id);
               final dateStr = DateFormat('dd MMM, hh:mm a').format(winner.date);
@@ -513,7 +512,7 @@ class DrawDetailScreen extends StatelessWidget {
           }
           buffer.writeln("- ${m.name}: $status$winnerInfo");
       }
-      
+
       buffer.writeln("\nPowered by Mukkilapedia Team");
 
       Share.share(buffer.toString());

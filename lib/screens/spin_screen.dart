@@ -160,17 +160,25 @@ class _SpinScreenState extends State<SpinScreen> {
                         ),
                          // Center Logo / Indicator
                         Container(
-                            width: responsive.sizeFromMinDimension(8),
-                            height: responsive.sizeFromMinDimension(8),
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.black,
-                                border: Border.all(color: Colors.amber, width: responsive.spacing(3)),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: responsive.spacing(10))]
+                          width: responsive.sizeFromMinDimension(8),
+                          height: responsive.sizeFromMinDimension(8),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black,
+                            border: Border.all(color: Colors.amber, width: responsive.spacing(3)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: responsive.spacing(10),
+                              )
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              "assets/images/app_logo.jpg",
+                              fit: BoxFit.cover,
                             ),
-                            child: Center(
-                                child: Text("MK", style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: responsive.fontSize(20)))
-                            ),
+                          ),
                         )
                       ]
                   ),
