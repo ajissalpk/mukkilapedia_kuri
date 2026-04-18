@@ -15,6 +15,46 @@ class DrawDetailScreen extends StatefulWidget {
 
   const DrawDetailScreen({super.key, required this.drawId});
 
+  static String generateReportText(Draw draw) {
+      final total = draw.members.length;
+      final paid = draw.members.where((m) => m.isPaid).length;
+
+      final buffer = StringBuffer();
+      buffer.writeln("📢 *${draw.name.toUpperCase()} REPORT* 📢");
+      if (draw.entryAmount != null) buffer.writeln("💰 Amount: ₹${draw.entryAmount}");
+      buffer.writeln("📅 Status: $paid/$total Paid");
+      buffer.writeln("--------------------------------");
+
+      if (draw.defaultPrize != null) buffer.writeln("🏆 Prize: ${draw.defaultPrize}");
+      if (draw.captainId != null) {
+          final captain = draw.members.firstWhere((m) => m.id == draw.captainId);
+          buffer.writeln("⭐ Captain: ${captain.name}");
+      }
+      buffer.writeln("--------------------------------");
+
+      buffer.writeln("📋 *Members List:*");
+      for (var m in draw.members) {
+          final status = m.isPaid ? "✅ Paid" : "❌ Due";
+          String winnerInfo = "";
+
+          try {
+              final winner = draw.winners.firstWhere((w) => w.member.id == m.id);
+              final dateStr = DateFormat('dd MMM, hh:mm a').format(winner.date);
+              // Extract type from prize string if possible or infer
+              // We saved it as "Prize (Manual)" or "Prize (Final)"
+              // Let's just show the prize string which contains the method
+              winnerInfo = " \n   🏆 WON: ${winner.prize}\n   $dateStr";
+          } catch (e) {
+              // Not a winner
+          }
+          buffer.writeln("- ${m.name}: $status$winnerInfo");
+      }
+
+      buffer.writeln("\nPowered by Mukkilapedia Team");
+
+      return buffer.toString();
+  }
+
   @override
   State<DrawDetailScreen> createState() => _DrawDetailScreenState();
 }
@@ -479,43 +519,7 @@ class _DrawDetailScreenState extends State<DrawDetailScreen> {
   }
 
   void _shareReport(BuildContext context, Draw draw) {
-      final total = draw.members.length;
-      final paid = draw.members.where((m) => m.isPaid).length;
-
-      final buffer = StringBuffer();
-      buffer.writeln("📢 *${draw.name.toUpperCase()} REPORT* 📢");
-      if (draw.entryAmount != null) buffer.writeln("💰 Amount: ₹${draw.entryAmount}");
-      buffer.writeln("📅 Status: $paid/$total Paid");
-      buffer.writeln("--------------------------------");
-
-      if (draw.defaultPrize != null) buffer.writeln("🏆 Prize: ${draw.defaultPrize}");
-      if (draw.captainId != null) {
-          final captain = draw.members.firstWhere((m) => m.id == draw.captainId);
-          buffer.writeln("⭐ Captain: ${captain.name}");
-      }
-      buffer.writeln("--------------------------------");
-
-      buffer.writeln("📋 *Members List:*");
-      for (var m in draw.members) {
-          final status = m.isPaid ? "✅ Paid" : "❌ Due";
-          String winnerInfo = "";
-
-          try {
-              final winner = draw.winners.firstWhere((w) => w.member.id == m.id);
-              final dateStr = DateFormat('dd MMM, hh:mm a').format(winner.date);
-              // Extract type from prize string if possible or infer
-              // We saved it as "Prize (Manual)" or "Prize (Final)"
-              // Let's just show the prize string which contains the method
-              winnerInfo = " \n   🏆 WON: ${winner.prize}\n   $dateStr";
-          } catch (e) {
-              // Not a winner
-          }
-          buffer.writeln("- ${m.name}: $status$winnerInfo");
-      }
-
-      buffer.writeln("\nPowered by Mukkilapedia Team");
-
-      Share.share(buffer.toString());
+      Share.share(DrawDetailScreen.generateReportText(draw));
   }
 
   void _showErrorDialog(BuildContext context, String title, String msg) {

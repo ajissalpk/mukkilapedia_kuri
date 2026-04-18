@@ -28,6 +28,12 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>Kuri Draw saves your lucky draw recording to the gallery</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Kuri Draw needs to save the recorded video to your Photos</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Kuri Draw needs microphone access for screen recording</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
