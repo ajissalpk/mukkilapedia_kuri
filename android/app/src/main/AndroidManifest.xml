@@ -36,10 +36,10 @@
         </activity>
 
         <!-- ── Required for flutter_screen_recording ── -->
-        <service
-            android:name="com.isvisoft.flutter_screen_recording.FlutterScreenRecordingPlugin"
-            android:foregroundServiceType="mediaProjection"
-            android:exported="false"/>
+<!--        <service-->
+<!--            android:name="com.isvisoft.flutter_screen_recording.FlutterScreenRecordingPlugin"-->
+<!--            android:foregroundServiceType="mediaProjection"-->
+<!--            android:exported="false"/>-->
 
         <meta-data
             android:name="flutterEmbedding"
